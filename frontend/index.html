@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration & Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    input {
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      width: calc(100% - 2rem); /* Account for padding */
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      color: #374151;
+    }
+    button {
+      background-color: #4f46e5;
+      color: white;
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #4338ca;
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 70vh; /* Adjust as needed */
+      max-width: 600px;
+      width: 100%;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .chat-messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      background-color: #f9fafb;
+    }
+    .message {
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    .message.user {
+      background-color: #e0e7ff;
+      align-self: flex-end;
+      margin-left: auto;
+      text-align: right;
+    }
+    .message.ai {
+      background-color: #d1fae5;
+      align-self: flex-start;
+      margin-right: auto;
+      text-align: left;
+    }
+    .chat-input-area {
+      display: flex;
+      padding: 1rem;
+      border-top: 1px solid #e5e7eb;
+      background-color: #ffffff;
+    }
+    .chat-input-area input {
+      flex-grow: 1;
+      margin-bottom: 0;
+      margin-right: 0.75rem;
+    }
+    .chat-input-area button {
+      width: auto;
+      padding: 0.75rem 1.25rem;
+    }
+    .message-box {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        text-align: center;
+        display: none; /* Hidden by default */
+    }
+    .message-box button {
+        margin-top: 10px;
+        background-color: #4f46e5;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Registration form -->
+  <div id="register" class="card">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Register Your Device</h2>
+    <input id="name" placeholder="Name" class="focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+    <input id="phone" placeholder="Phone Number" class="focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+    <input id="system" placeholder="System Model" class="focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+    <button onclick="register()" class="hover:bg-indigo-700">Register</button>
+  </div>
+
+  <!-- Chat UI -->
+  <div id="chat" class="chat-container hidden">
+    <div class="p-4 bg-indigo-600 text-white text-xl font-semibold rounded-t-lg">
+      Support Chat
+    </div>
+    <div id="chat-messages" class="chat-messages flex flex-col">
+      <!-- Messages will be appended here -->
+    </div>
+    <div class="chat-input-area">
+      <input id="chat-input" placeholder="Type your message..." class="focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+      <button onclick="sendMessage()" class="hover:bg-indigo-700">Send</button>
+    </div>
+  </div>
+
+  <!-- Custom Message Box -->
+  <div id="customMessageBox" class="message-box">
+      <p id="messageBoxText"></p>
+      <button onclick="closeMessageBox()">OK</button>
+  </div>
+
+  <script>
+    let currentSessionId = null;
+
+    // Function to show custom message box instead of alert
+    function showMessageBox(message) {
+        document.getElementById('messageBoxText').innerText = message;
+        document.getElementById('customMessageBox').style.display = 'block';
+    }
+
+    // Function to close custom message box
+    function closeMessageBox() {
+        document.getElementById('customMessageBox').style.display = 'none';
+    }
+
+    function register() {
+      const name = document.getElementById('name').value;
+      const phone = document.getElementById('phone').value;
+      const system = document.getElementById('system').value; // This is 'system_model' on backend
+
+      if (!name || !phone || !system) {
+        showMessageBox("Please fill in all registration fields.");
+        return;
+      }
+
+      fetch('http://localhost:5001/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        // Ensure the key matches the backend's expectation ('system_model')
+        body: JSON.stringify({name: name, phone: phone, system_model: system})
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          currentSessionId = data.session_id;
+          document.getElementById('register').classList.add('hidden');
+          document.getElementById('chat').classList.remove('hidden');
+          showMessageBox(data.message);
+        } else {
+          showMessageBox(data.message || "Registration failed. Please try again.");
+        }
+      })
+      .catch(err => {
+        console.error("Fetch error during registration:", err);
+        showMessageBox("Network error during registration. Please check your connection and server.");
+      });
+    }
+
+    function sendMessage() {
+      const chatInput = document.getElementById('chat-input');
+      const message = chatInput.value.trim();
+
+      if (!message) return;
+
+      appendMessage('user', message);
+      chatInput.value = ''; // Clear input
+
+      fetch('http://localhost:5001/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({session_id: currentSessionId, message: message})
+      })
+      .then(res => res.json())
+      .then(data => {
+        appendMessage('ai', data.reply);
+      })
+      .catch(err => {
+        console.error("Fetch error during chat:", err);
+        appendMessage('ai', "Error: Could not get a response from the AI. Please try again.");
+      });
+    }
+
+    function appendMessage(sender, text) {
+      const chatMessages = document.getElementById('chat-messages');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', sender);
+      messageDiv.textContent = text;
+      chatMessages.appendChild(messageDiv);
+      // Scroll to the bottom
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  </script>
+</body>
+</html>

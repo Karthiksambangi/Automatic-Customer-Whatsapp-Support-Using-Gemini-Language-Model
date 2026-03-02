@@ -1,0 +1,10 @@
+{
+  "registered_numbers": [
+    "919391547257",
+    "9515613538", 
+    "919515613538"
+  ],
+  "gemini_api_key": "AIzaSyAWOjQe9b7DqETND_t2I-9H9CpHMmq4iW0",
+  "server_port": 9002,
+  "max_response_tokens": 60
+} 
